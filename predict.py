@@ -4,10 +4,12 @@
 from cog import BasePredictor, Input, Path
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
 import sys
-sys.path.append("..")
 import cv2
 import numpy as np
 import imutils
+import base64
+
+sys.path.append("..")
 
 def show_anns(anns):
     if len(anns) == 0:
@@ -35,7 +37,7 @@ class Predictor(BasePredictor):
     
     def predict(
         self,
-        image: Path = Input(description="Input image"),
+        image: str = Input(description="Base64 encoded input image"),
         resize_width: int = Input(default=1024, description="The width to resize the image to before running inference."),
         points_per_side: int = Input(default = 32, description= "The number of points to be sampled along one side of the image. The total number of points is points_per_side**2. If None, point_grids must provide explicit point sampling."),
         pred_iou_thresh: float = Input(default=0.88,description="A filtering threshold in [0,1], using the model's predicted mask quality."),
@@ -56,7 +58,13 @@ class Predictor(BasePredictor):
 
         mask_generator = SamAutomaticMaskGenerator(self.sam, **args)
 
-        image = cv2.imread(str(image))
+        # convert the base64 string to bytes
+        image_data = base64.b64decode(image)
+        # convert the bytes to a numpy array
+        nparr = np.frombuffer(image_data, np.uint8)
+        # decode the numpy array as an image
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
         image = imutils.resize(image, width=resize_width)
 
         masks = mask_generator.generate(image)

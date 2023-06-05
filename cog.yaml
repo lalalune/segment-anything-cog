@@ -18,7 +18,7 @@ build:
      - torch==1.13.0
      - torchvision
      - opencv-python
-     - git+https://github.com/facebookresearch/segment-anything.git
+     - segment-anything
      - pycocotools
      - onnxruntime
      - onnx

@@ -1,5 +1,6 @@
 from cog import BasePredictor, Input, Path
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
+from segment_anything.utils import filter_segmentation, remove_overlaps
 import sys
 import cv2
 import numpy as np
@@ -46,6 +47,14 @@ class Predictor(BasePredictor):
         image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
         masks = mask_generator.generate(image)
+
+        # filter masks
+        image_area = image.shape[0] * image.shape[1]
+        lower_area = image_area * (0.05 ** 2)
+        upper_area = image_area * (0.8 ** 2)
+        masks = filter_segmentation(masks, lower_area, upper_area)
+        masks = remove_overlaps(masks, 0.01)
+        print("Filtered masks to", len(masks))
         
         # convert masks to json
         json_masks = []
